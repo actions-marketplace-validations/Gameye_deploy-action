@@ -1,5 +1,7 @@
 # Gameye Deploy Action
 
+[![Discord](https://img.shields.io/badge/Discord-join%20chat-5865F2?logo=discord&logoColor=white)](https://discord.com/invite/QvJ3KH5max)
+
 This action puts a freshly pushed game server image live on [Gameye](https://gameye.com) from GitHub Actions. It can also prove the build boots before anyone plays it.
 
 1. **Register the tag** with your Gameye application.
