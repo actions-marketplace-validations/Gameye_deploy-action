@@ -18,7 +18,11 @@ export function readInputs(env = process.env) {
   return {
     token: input("api-token"),
     environment,
-    origin: resolveOrigin(environment, input("api-url")),
+    origin: resolveOrigin(
+      environment,
+      input("api-url"),
+      parseBoolean(input("allow-custom-api-url") || "false", "allow-custom-api-url"),
+    ),
     application: input("application"),
     tag: input("tag"),
     regions: parseRegions(input("region")),

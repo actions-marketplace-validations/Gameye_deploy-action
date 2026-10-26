@@ -22,10 +22,23 @@ export function isTransient(error) {
   return error instanceof GameyeError && (error.status === 0 || error.status === 429 || error.status >= 500);
 }
 
-export function resolveOrigin(environment, apiUrl) {
+// The API token goes to whatever api-url names, so only Gameye hosts are allowed unless the
+// workflow opts in.
+function isGameyeHost(hostname) {
+  const host = hostname.toLowerCase().replace(/\.$/, "");
+  return host === "gameye.net" || host.endsWith(".gameye.net");
+}
+
+export function resolveOrigin(environment, apiUrl, allowCustomApiUrl = false) {
   if (apiUrl) {
     const url = new URL(apiUrl);
     if (url.protocol !== "https:") throw new Error("api-url must use https.");
+    if (!allowCustomApiUrl && !isGameyeHost(url.hostname)) {
+      throw new Error(
+        `api-url must be a *.gameye.net host (got ${url.hostname}), because the API token is sent to it. ` +
+          "Set allow-custom-api-url: true to use another host.",
+      );
+    }
     return url.origin;
   }
   const origin = ENVIRONMENTS[environment];

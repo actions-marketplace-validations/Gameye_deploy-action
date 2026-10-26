@@ -248,3 +248,23 @@ test("a failed smoke test records the last log lines for the summary", async () 
   assert.equal(h.report.smoke.passed, false);
   assert.deepEqual(h.report.smoke.logTail, ["booting", "crashed: missing map"]);
 });
+
+test("the smoke-duration must be one uninterrupted stretch of running", async () => {
+  // 30s smoke at 5s polls: running for 20s, unreachable once, then running again.
+  // Without the reset the clock would keep counting from the first running.
+  const blip = { status: "server_unreachable", tag: "v1.2.3" };
+  const h = harness({ sessions: [running(), running(), running(), running(), running(), blip, running()] });
+  await run({ ...baseInputs, smokeTest: true }, h.deps);
+  const describes = h.names().filter((n) => n === "describeSession").length;
+  // 5 running + 1 blip, then 7 more polls (0s..30s) of a fresh running stretch.
+  assert.equal(describes, 13);
+  assert.ok(h.output.some((m) => /left running \(status "server_unreachable"\)/.test(m)));
+});
+
+test("a session that keeps dropping out of running fails with a clear message", async () => {
+  const flap = { status: "server_unreachable", tag: "v1.2.3" };
+  const sessions = [];
+  for (let i = 0; i < 200; i++) sessions.push(i % 3 === 2 ? flap : running());
+  const h = harness({ sessions });
+  await assert.rejects(run({ ...baseInputs, smokeTest: true }, h.deps), /did not stay running for the smoke-duration in one stretch/);
+});

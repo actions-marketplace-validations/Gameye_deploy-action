@@ -63,8 +63,9 @@ test("logs are fetched without following", async () => {
 test("resolves environments and rejects non-https overrides", () => {
   assert.equal(resolveOrigin("sandbox", ""), "https://api.sandbox-gameye.gameye.net");
   assert.equal(resolveOrigin("production", ""), "https://api.production-gameye.gameye.net");
-  assert.equal(resolveOrigin("sandbox", "https://api.example.test/x"), "https://api.example.test");
-  assert.throws(() => resolveOrigin("sandbox", "http://api.example.test"), /https/);
+  assert.equal(resolveOrigin("sandbox", "https://api.staging.gameye.net/x"), "https://api.staging.gameye.net");
+  assert.equal(resolveOrigin("sandbox", "https://API.Sandbox-Gameye.Gameye.Net./"), "https://api.sandbox-gameye.gameye.net.");
+  assert.throws(() => resolveOrigin("sandbox", "http://api.sandbox-gameye.gameye.net"), /https/);
   assert.throws(() => resolveOrigin("staging", ""), /Unknown environment/);
 });
 
@@ -77,4 +78,12 @@ test("a request that gets no response is a transient GameyeError", async () => {
     assert.match(e.message, /could not reach .*ECONNRESET/);
     return true;
   });
+});
+
+test("an api-url outside *.gameye.net needs allow-custom-api-url, since the token is sent there", () => {
+  for (const url of ["https://api.example.test", "https://gameye.net.example.test", "https://evilgameye.net"]) {
+    assert.throws(() => resolveOrigin("sandbox", url), /must be a \*\.gameye\.net host.*allow-custom-api-url/);
+  }
+  assert.equal(resolveOrigin("sandbox", "https://api.example.test/x", true), "https://api.example.test");
+  assert.throws(() => resolveOrigin("sandbox", "http://api.example.test", true), /https/);
 });

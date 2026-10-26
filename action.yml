@@ -13,8 +13,11 @@ inputs:
     description: "Gameye environment: sandbox (self-serve) or production (enterprise)."
     default: sandbox
   api-url:
-    description: Overrides the API origin for the environment. Must be https.
+    description: Overrides the API origin for the environment. Must be https and a *.gameye.net host, unless allow-custom-api-url is true.
     default: ""
+  allow-custom-api-url:
+    description: Allow an api-url outside *.gameye.net. The API token is sent to that host.
+    default: "false"
   application:
     description: The Gameye application name (not the image reference).
     required: true

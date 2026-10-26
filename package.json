@@ -1,6 +1,6 @@
 {
   "name": "gameye-deploy-action",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "description": "GitHub Action: register a new image tag with Gameye, wait until it is pulled, and smoke-test it",
   "type": "module",

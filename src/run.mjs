@@ -173,7 +173,7 @@ async function smokeTest(inputs, { client, core, sleep, now, report }) {
 }
 
 // Returns an ActionFailure when the session may still be running because of the token, else nothing.
-async function stopSession(id, { client, core, sleep, now }) {
+export async function stopSession(id, { client, core, sleep, now }) {
   const deadline = now() + STOP_RETRY_MS;
   for (;;) {
     let outcome;
@@ -209,6 +209,7 @@ async function watchSession(id, { tag, startupTimeoutMs, smokeDurationMs }, { cl
   const startedAt = now();
   const deadline = startedAt + startupTimeoutMs + smokeDurationMs + WATCH_SLACK_MS;
   let runningSince;
+  let everRunning = false;
   let unreachableSince;
 
   for (;;) {
@@ -251,15 +252,24 @@ async function watchSession(id, { tag, startupTimeoutMs, smokeDurationMs }, { cl
       if (session.status === "running") {
         if (runningSince === undefined) core.info(`Session ${id} is running.`);
         runningSince ??= t;
+        everRunning = true;
         if (t - runningSince >= smokeDurationMs) return;
+      } else {
+        // The smoke-duration must be one uninterrupted stretch of running.
+        if (runningSince !== undefined) core.info(`Session ${id} left running (status "${session.status}").`);
+        runningSince = undefined;
       }
     }
 
-    if (runningSince === undefined && t - startedAt > startupTimeoutMs) {
+    if (!everRunning && t - startedAt > startupTimeoutMs) {
       throw new ActionFailure(`Session ${id} did not reach running within the startup-timeout.`);
     }
     if (t > deadline) {
-      throw new ActionFailure(`Could not confirm session ${id} stayed running; the Gameye API kept failing.`);
+      throw new ActionFailure(
+        everRunning
+          ? `Session ${id} did not stay running for the smoke-duration in one stretch.`
+          : `Could not confirm session ${id} stayed running; the Gameye API kept failing.`,
+      );
     }
     await sleep(SESSION_POLL_MS);
   }

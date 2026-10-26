@@ -22,6 +22,8 @@ The action uses only the public Gameye Session API, and it has no dependencies.
     smoke-test: true
 ```
 
+`@v0` moves to each new 0.x release. This action receives your Gameye API token, so pin it if you'd rather review changes first: name a release (`gameye/deploy-action@v0.3.0`) or, as GitHub recommends for third-party actions, a full commit SHA (`gameye/deploy-action@<commit-sha> # v0.3.0`). Dependabot can keep either up to date.
+
 [`examples/deploy.yml`](examples/deploy.yml) is a complete workflow: build, push to GHCR, register and smoke-test.
 
 Gameye must be able to pull the image. For a private GHCR package, follow the [GHCR guide](https://gameye.com/docs/getting-started/ghcr/), or the tag will never become available and the wait step times out.
@@ -35,12 +37,13 @@ Gameye must be able to pull the image. For a private GHCR package, follow the [G
 | `tag` | required | Image tag to register. |
 | `region` | | Region to wait for and smoke-test in. List several, comma- or newline-separated, to wait for all of them; the smoke test runs in the first. Required for `wait-for-tag` and `smoke-test`. |
 | `environment` | `sandbox` | `sandbox` (self-serve) or `production` (enterprise). |
-| `api-url` | | Overrides the API origin. It must use https. |
+| `api-url` | | Overrides the API origin. It must use https and be a `*.gameye.net` host, because the API token is sent to it. |
+| `allow-custom-api-url` | `false` | Set to `true` to allow an `api-url` outside `*.gameye.net`. |
 | `enable-tag` | `true` | Register the tag with the application. |
 | `wait-for-tag` | `true` | Wait until the tag is pulled in every listed region. |
 | `wait-timeout` | `15m` | How long to wait for the tag. |
 | `smoke-test` | `false` | Start a session on the tag, check it stays up, then stop it. |
-| `smoke-duration` | `60s` | How long the session must stay `running` to pass. |
+| `smoke-duration` | `60s` | How long the session must stay `running`, without a break, to pass. A drop to any other status restarts the count. |
 | `startup-timeout` | `3m` | How long the session may take to reach `running`. |
 | `smoke-args` | | Program arguments for the session, one per line. |
 | `smoke-env` | | Environment variables for the session, one `KEY=VALUE` per line. The values are masked in the log. |
